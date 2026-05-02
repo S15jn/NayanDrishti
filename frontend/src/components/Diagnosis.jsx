@@ -1,9 +1,30 @@
-function Diagnosis({ formData, setFormData }) {
+import React from "react";
+
+function Diagnosis({ formData = {}, setFormData, data, setData, saveNow, status }) {
+
+  // ✅ support both patterns safely
+  const currentData =
+    formData && Object.keys(formData).length ? formData : data || {};
+
+  const isSectionMode = !!setData;
+
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+
+    // ✅ SECTION MODE (safe update)
+    if (isSectionMode) {
+      setData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    } 
+    // ✅ FULL FORM MODE
+    else if (setFormData) {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   return (
@@ -21,7 +42,7 @@ function Diagnosis({ formData, setFormData }) {
         <textarea
           name="diagnosis"
           placeholder="Enter diagnosis..."
-          value={formData.diagnosis || ""}
+          value={currentData.diagnosis || ""}
           onChange={handleChange}
           className="input w-full h-24"
         />
@@ -36,7 +57,7 @@ function Diagnosis({ formData, setFormData }) {
         <textarea
           name="prescription"
           placeholder="Write medicines / instructions..."
-          value={formData.prescription || ""}
+          value={currentData.prescription || ""}
           onChange={handleChange}
           className="input w-full h-28"
         />
@@ -51,11 +72,29 @@ function Diagnosis({ formData, setFormData }) {
         <input
           type="date"
           name="followUpDate"
-          value={formData.followUpDate || ""}
+          value={currentData.followUpDate || ""}
           onChange={handleChange}
           className="input"
         />
       </div>
+
+      {/* 🔥 SAVE BAR */}
+      {saveNow && (
+        <div className="flex justify-between items-center pt-2">
+          <button
+            onClick={saveNow}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            Save
+          </button>
+
+          <span className="text-sm text-gray-500">
+            {status === "saving" && "Saving..."}
+            {status === "saved" && "Saved ✅"}
+            {status === "error" && "Error ❌"}
+          </span>
+        </div>
+      )}
 
     </div>
   );

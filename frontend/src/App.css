@@ -1,0 +1,64 @@
+.medication-container {
+  display: flex;
+  gap: 20px;
+}
+
+.left-section {
+  flex: 3;
+}
+
+.right-panel {
+  flex: 1;
+  border-left: 1px solid #ddd;
+  padding-left: 15px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+input, select {
+  width: 100%;
+  padding: 5px;
+}
+
+.add-row-btn {
+  margin-top: 10px;
+  background: #007bff;
+  color: white;
+  padding: 8px;
+}
+
+.save-btn {
+  margin-left: 10px;
+  background: green;
+  color: white;
+  padding: 8px;
+}
+
+.delete-btn {
+  background: red;
+  color: white;
+  border: none;
+}
+
+.continue-btn {
+  background: teal;
+  color: white;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.save-set-btn {
+  background: green;
+  color: white;
+  width: 100%;
+  margin-bottom: 10px;
+}

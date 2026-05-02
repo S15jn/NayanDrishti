@@ -1,34 +1,79 @@
 import Record from "../models/Record.js";
 
-export const saveRecord = async (req, res) => {
+const parseBody = (body) => {
+  if (typeof body !== "string") {
+    return body || {};
+  }
+
   try {
-    const { appointmentId } = req.body;
-
-    const record = await Record.findOneAndUpdate(
-      { appointmentId },
-      req.body,
-      { new: true, upsert: true }
-    );
-
-    res.json({ message: "Saved", record });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+    return JSON.parse(body);
+  } catch {
+    return {};
   }
 };
 
-//  Get records by patient
+const buildRecordPayload = (body) => {
+  const payload = parseBody(body);
+
+  return {
+    patientId: payload.patientId,
+    appointmentId: payload.appointmentId,
+    history: payload.history || {},
+    refraction: payload.refraction || {},
+    examination: payload.examination || {},
+    diagnosis: payload.diagnosis || "",
+    prescription: payload.prescription || "",
+    followUpDate: payload.followUpDate || null,
+    medical: payload.medical || {},
+  };
+};
+
+export const saveRecord = async (req, res) => {
+  try {
+    const payload = buildRecordPayload(req.body);
+
+    if (!payload.patientId || !payload.appointmentId) {
+      return res.status(400).json({
+        message: "patientId and appointmentId are required",
+      });
+    }
+
+    const record = await Record.findOneAndUpdate(
+  { appointmentId: payload.appointmentId },
+  { $set: payload },
+  {
+    returnDocument: "after",
+    upsert: true,
+    runValidators: true,
+    setDefaultsOnInsert: true,
+  },
+);
+
+
+    return res.json({
+      message: "Saved",
+      record,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message,
+    });
+  }
+};
+
+// Get records by patient
 export const getPatientRecords = async (req, res) => {
   try {
     const { patientId } = req.params;
 
-    const records = await Record.find({ patientId })
-      .sort({ createdAt: -1 });
+    const records = await Record.find({ patientId }).sort({
+      updatedAt: -1,
+    });
 
-    res.json(records);
-
+    return res.json(records);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    return res.status(500).json({
+      message: err.message,
+    });
   }
 };
-
-

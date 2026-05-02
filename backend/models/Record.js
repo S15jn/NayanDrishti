@@ -1,141 +1,51 @@
 import mongoose from "mongoose";
 
-/* =========================
-   COMMON SCHEMAS
-========================= */
+const { Schema } = mongoose;
 
-// Examination (multi-select + comment)
-const examFieldSchema = new mongoose.Schema({
-  values: [String],
-  comment: String,
-});
-
-// History row (used in multiple sections)
-const historyRowSchema = new mongoose.Schema({
-  name: String,
-  eye: String, 
-  duration: String,
-  unit: String,
-  comment: String,
-});
-
-// Refraction prescription
-const prescriptionSchema = new mongoose.Schema({
-  sph: String,
-  cyl: String,
-  axis: String,
-  vision: String,
-});
-
-// Refraction eye schema
-const eyeRefractionSchema = new mongoose.Schema({
-  ucva: String,
-  pinhole: String,
-  glass: String,
-
-  distant: prescriptionSchema,
-  near: prescriptionSchema,
-
-  typeOfLens: String,
-  lensMaterial: String,
-  lensTint: String,
-  frameMaterial: String,
-  ipd: String,
-  size: String,
-
-  comments: String,
-});
-
-/* =========================
-   MAIN RECORD SCHEMA
-========================= */
-
-const recordSchema = new mongoose.Schema(
+const recordSchema = new Schema(
   {
     patientId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: "Patient",
+      required: true,
     },
-
     appointmentId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: "Appointment",
+      required: true,
+      unique: true,
+      index: true,
     },
-
-    /* =========================
-       HISTORY
-    ========================= */
-
-    complaints: [historyRowSchema],
-
-    ophthalmicHistory: [historyRowSchema],
-
-    systemicHistory: [
-      {
-        name: String,
-        duration: String,
-        unit: String,
-        comment: String,
-      },
-    ],
-
-    familyHistory: {
-      family: String,
-      medical: String,
+    history: {
+      type: Schema.Types.Mixed,
+      default: () => ({}),
     },
-
-    allergies: {
-      drugAllergies: {
-        selected: [String],
-        comment: String,
-      },
-      contactAllergies: [String],
-    },
-
-    /* =========================
-       REFRACTION (NEW)
-    ========================= */
-
     refraction: {
-      right: eyeRefractionSchema,
-      left: eyeRefractionSchema,
+      type: Schema.Types.Mixed,
+      default: () => ({}),
     },
-
-    /* =========================
-       EXAMINATION
-    ========================= */
-
     examination: {
-      appearance: { right: examFieldSchema, left: examFieldSchema },
-      injury: { right: examFieldSchema, left: examFieldSchema },
-      conjunctiva: { right: examFieldSchema, left: examFieldSchema },
-      cornea: { right: examFieldSchema, left: examFieldSchema },
-      pupil: { right: examFieldSchema, left: examFieldSchema },
-      iris: { right: examFieldSchema, left: examFieldSchema },
-      lens: { right: examFieldSchema, left: examFieldSchema },
+      type: Schema.Types.Mixed,
+      default: () => ({}),
     },
-
-    examNotes: String,
-    fundusDiagram: String,
-
-    /* =========================
-       DIAGNOSIS
-    ========================= */
-
-    diagnosis: String,
-    prescription: String,
-
-    medicines: [
-      {
-        name: String,
-        dose: String,
-        duration: String,
-      },
-    ],
-
-    followUpDate: Date,
+    diagnosis: {
+      type: String,
+      default: "",
+    },
+    prescription: {
+      type: String,
+      default: "",
+    },
+    followUpDate: {
+      type: Date,
+      default: null,
+    },
+    medical: {
+      type: Schema.Types.Mixed,
+      default: () => ({}),
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.model("Record", recordSchema);
