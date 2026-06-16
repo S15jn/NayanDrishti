@@ -45,16 +45,45 @@ const appointmentSchema = new mongoose.Schema(
       default: "Pending",
     },
 
+    /* =========================
+       PAYMENT DETAILS
+    ========================= */
+
     paymentStatus: {
       type: String,
       enum: ["Unpaid", "Paid"],
       default: "Unpaid",
     },
 
+    paymentMode: {
+      type: String,
+      enum: ["CASH", "ONLINE", "UPI", "CARD"],
+      default: "ONLINE",
+    },
+
     amount: {
       type: Number,
       default: 0,
     },
+
+    discount: {
+      type: Number,
+      default: 0,
+    },
+
+    finalAmount: {
+      type: Number,
+      default: 0,
+    },
+
+    couponCode: {
+      type: String,
+      default: "",
+      trim: true,
+      uppercase: true,
+    },
+
+    /* ========================= */
 
     followUpDate: {
       type: Date,
@@ -82,22 +111,40 @@ const appointmentSchema = new mongoose.Schema(
 );
 
 /* =========================
-    UNIQUE SLOT PROTECTION
+   UNIQUE SLOT PROTECTION
 ========================= */
-// Same date + same time = no duplicate booking
-appointmentSchema.index({ date: 1, time: 1 }, { unique: true });
+
+appointmentSchema.index(
+  { date: 1, time: 1 },
+  { unique: true },
+);
 
 /* =========================
-    FAST QUERY INDEXES
+   FAST QUERY INDEXES
 ========================= */
 
-// For today's appointments
+// Today's appointments
 appointmentSchema.index({ date: 1 });
 
-// For doctor dashboard
-appointmentSchema.index({ doctorId: 1, date: 1 });
+// Doctor dashboard
+appointmentSchema.index({
+  doctorId: 1,
+  date: 1,
+});
 
-// For queue (token order)
-appointmentSchema.index({ date: 1, token: 1 });
+// Queue token order
+appointmentSchema.index({
+  date: 1,
+  token: 1,
+});
 
-export default mongoose.model("Appointment", appointmentSchema);
+// Payment reports
+appointmentSchema.index({
+  paymentStatus: 1,
+  paymentMode: 1,
+});
+
+export default mongoose.model(
+  "Appointment",
+  appointmentSchema,
+);

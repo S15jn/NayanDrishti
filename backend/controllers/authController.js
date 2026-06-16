@@ -4,51 +4,71 @@ import jwt from "jsonwebtoken";
 
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { staffId, email, password, role } = req.body;
 
-    // 🔹 validation
-    if (!email || !password) {
-      return res.status(400).json({ message: "Email and password required" });
+    if (!staffId || !email || !password || !role) {
+      return res.status(400).json({
+        message: "Staff ID, email, password and role are required",
+      });
     }
 
-    // 🔹 find user
-    const user = await User.findOne({ email }).select("+password");
+    const user = await User.findOne({
+      staffId: staffId.trim().toUpperCase(),
+      email: email.trim().toLowerCase(),
+    }).select("+password");
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // 🔹 compare password
+    if (user.role !== role) {
+      return res.status(403).json({ message: "Invalid role" });
+    }
+
+    if (!user.isActive) {
+      return res.status(403).json({ message: "Account is disabled" });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // 🔹 token
     const token = jwt.sign(
       {
         id: user._id,
+        staffId: user.staffId,
         role: user.role,
       },
       process.env.JWT_SECRET || "secretkey",
-      { expiresIn: "1d" }
+      { expiresIn: "8h" },
     );
 
-    // 🔹 send clean response
-    res.status(200).json({
+    return res.json({
       token,
       user: {
         id: user._id,
+        staffId: user.staffId,
         name: user.name,
         email: user.email,
         role: user.role,
-        doctorId: user.doctorId || user._id, // fallback
       },
     });
-
   } catch (err) {
-    console.error("Login Error:", err);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: err.message });
   }
+};
+
+export const getMe = async (req, res) => {
+  return res.json({
+    user: {
+      id: req.user._id,
+      staffId: req.user.staffId,
+      name: req.user.name,
+      email: req.user.email,
+      role: req.user.role,
+      isActive: req.user.isActive,
+    },
+  });
 };
