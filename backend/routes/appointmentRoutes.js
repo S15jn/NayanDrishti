@@ -1,4 +1,5 @@
 import express from "express";
+import rateLimit from "express-rate-limit";
 
 import {
   bookAppointment,
@@ -15,24 +16,34 @@ import { roleMiddleware } from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
-/* =========================
-   PUBLIC USER BOOKING
-========================= */
-router.post("/book", bookAppointment);
+const publicBookingLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    message: "Too many booking attempts. Please try again later.",
+  },
+});
 
-/* =========================
-   RECEPTION BOOKING
-========================= */
+const searchLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    message: "Too many search requests. Please slow down.",
+  },
+});
+
+router.post("/book", publicBookingLimiter, bookAppointment);
+
 router.post(
   "/reception-book",
   authMiddleware,
   roleMiddleware(["admin", "receptionist"]),
   receptionBookAppointment,
 );
-
-/* =========================
-   PROTECTED ROUTES
-========================= */
 
 router.get(
   "/today",
@@ -52,6 +63,7 @@ router.get(
   "/search",
   authMiddleware,
   roleMiddleware(["admin", "doctor", "receptionist"]),
+  searchLimiter,
   searchPatient,
 );
 
@@ -62,9 +74,6 @@ router.get(
   getNextPatient,
 );
 
-/* =========================
-   COMPLETE APPOINTMENT
-========================= */
 router.put(
   "/complete/:id",
   authMiddleware,

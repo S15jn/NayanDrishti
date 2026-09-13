@@ -11,9 +11,17 @@ import { roleMiddleware } from "../middleware/roleMiddleware.js";
 const router = express.Router();
 
 router.use(authMiddleware);
-router.use(roleMiddleware(["admin", "doctor"]));
 
-router.post("/save", saveRecord);
-router.get("/:patientId", getPatientRecords);
+router.post(
+  "/save",
+  roleMiddleware(["admin", "doctor"]),
+  saveRecord,
+);
+
+router.get(
+  "/:patientId",
+  roleMiddleware(["admin", "doctor", "receptionist"]),
+  getPatientRecords,
+);
 
 export default router;

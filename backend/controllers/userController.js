@@ -4,9 +4,19 @@ import bcrypt from "bcryptjs";
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const roles = ["admin", "doctor", "receptionist"];
 
+const normalizeEmail = (email = "") => String(email).trim().toLowerCase();
+const normalizeStaffId = (staffId = "") => String(staffId).trim().toUpperCase();
+const normalizeRole = (role = "") => String(role).trim().toLowerCase();
+
+const isStrongPassword = (password = "") =>
+  password.length >= 8 &&
+  /[A-Z]/.test(password) &&
+  /[a-z]/.test(password) &&
+  /\d/.test(password);
+
 export const addUser = async (req, res) => {
   try {
-    const { staffId, name, email, password, role } = req.body;
+    const { staffId, name, email, password, role, specialization } = req.body;
 
     if (!staffId || !name || !email || !password || !role) {
       return res.status(400).json({
@@ -14,26 +24,28 @@ export const addUser = async (req, res) => {
       });
     }
 
-    if (!emailRegex.test(email)) {
+    const normalizedEmail = normalizeEmail(email);
+    const normalizedStaffId = normalizeStaffId(staffId);
+    const normalizedRole = normalizeRole(role);
+
+    if (!emailRegex.test(normalizedEmail)) {
       return res.status(400).json({
         message: "Please enter a valid email",
       });
     }
 
-    if (!roles.includes(role)) {
+    if (!roles.includes(normalizedRole)) {
       return res.status(400).json({
         message: "Invalid role",
       });
     }
 
-    if (password.length < 8) {
+    if (!isStrongPassword(password)) {
       return res.status(400).json({
-        message: "Password must be at least 8 characters",
+        message:
+          "Password must be at least 8 characters and include uppercase, lowercase and number",
       });
     }
-
-    const normalizedEmail = email.trim().toLowerCase();
-    const normalizedStaffId = staffId.trim().toUpperCase();
 
     const existing = await User.findOne({
       $or: [{ email: normalizedEmail }, { staffId: normalizedStaffId }],
@@ -48,37 +60,40 @@ export const addUser = async (req, res) => {
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     const user = await User.create({
       staffId: normalizedStaffId,
-      name: name.trim(),
+      name: String(name).trim(),
       email: normalizedEmail,
       password: hashedPassword,
-      role,
+      role: normalizedRole,
+      specialization: String(specialization || "").trim(),
     });
 
     const safeUser = user.toObject();
     delete safeUser.password;
 
-    return res.json({
+    return res.status(201).json({
       message: "User created successfully",
       user: safeUser,
     });
   } catch (err) {
-    return res.status(500).json({ message: err.message });
+    console.error("ADD USER ERROR:", err);
+    return res.status(500).json({ message: "User creation failed" });
   }
 };
 
 export const getUsers = async (req, res) => {
   try {
     const users = await User.find()
-      .select("-password")
-      .sort({ createdAt: -1 });
+      .select("-password -failedLoginAttempts -lockUntil")
+      .sort({ createdAt: -1 })
+      .lean();
 
     return res.json(users);
   } catch (err) {
-    return res.status(500).json({ message: err.message });
+    return res.status(500).json({ message: "Unable to fetch users" });
   }
 };
 
@@ -89,15 +104,18 @@ export const updateUserStatus = async (req, res) => {
 
     if (req.user._id.toString() === id && isActive === false) {
       return res.status(400).json({
-        message: "You cannot disable your own admin account",
+        message: "You cannot disable your own account",
       });
     }
 
     const user = await User.findByIdAndUpdate(
       id,
       { isActive: Boolean(isActive) },
-      { returnDocument: "after" },
-    ).select("-password");
+      {
+        returnDocument: "after",
+        runValidators: true,
+      },
+    ).select("-password -failedLoginAttempts -lockUntil");
 
     if (!user) {
       return res.status(404).json({
@@ -110,6 +128,6 @@ export const updateUserStatus = async (req, res) => {
       user,
     });
   } catch (err) {
-    return res.status(500).json({ message: err.message });
+    return res.status(500).json({ message: "User update failed" });
   }
 };

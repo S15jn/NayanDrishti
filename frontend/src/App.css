@@ -62,3 +62,265 @@ input, select {
   width: 100%;
   margin-bottom: 10px;
 }
+
+
+/* PRINT  */
+.print-only {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+
+  html,
+  body,
+  #root {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  .print-only,
+  .print-only * {
+    visibility: visible !important;
+  }
+
+  .screen-only {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    background: white;
+  }
+
+  .print-prescription {
+    font-family: Arial, sans-serif;
+    color: #222;
+    font-size: 10.5px;
+    line-height: 1.25;
+    width: 100%;
+  }
+
+  .opd-header {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1.8px solid #444;
+  }
+
+  .brand-mark {
+    width: 38px;
+    height: 38px;
+    border: 2px solid #555;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 16px;
+  }
+
+  .brand-text h1 {
+    margin: 0;
+    font-size: 27px;
+    color: #444;
+    font-weight: 800;
+  }
+
+  .brand-text p {
+    margin: 0;
+    text-align: right;
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
+
+  .top-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    padding: 10px 0;
+    border-bottom: 1.5px solid #555;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: 82px 1fr;
+    row-gap: 3px;
+  }
+
+  .info-grid div {
+    display: contents;
+  }
+
+  .summary-title {
+    text-align: center;
+    font-size: 15px;
+    padding: 9px 0;
+    border-bottom: 1.8px solid #333;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+
+  .print-section {
+    border-bottom: 1.5px solid #444;
+    padding: 8px 0;
+    page-break-inside: avoid;
+  }
+
+  .print-section h2 {
+    margin: 0 0 6px;
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: 800;
+  }
+
+  .history-group {
+    margin-bottom: 4px;
+  }
+
+  .history-group ul {
+    margin: 2px 0 0 16px;
+    padding: 0;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+  }
+
+  .eye-box {
+    page-break-inside: avoid;
+  }
+
+  .eye-title {
+    text-align: center;
+    background: #e5e5e5 !important;
+    border: 1px solid #888;
+    font-weight: 800;
+    padding: 2px;
+    margin-bottom: 4px;
+  }
+
+  .rx-lines {
+    margin-bottom: 5px;
+  }
+
+  .sub-heading {
+    font-weight: 800;
+    margin: 4px 0 2px;
+  }
+
+  .mini-table,
+  .medicine-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10px;
+    margin-bottom: 5px;
+  }
+
+  .mini-table th,
+  .mini-table td,
+  .medicine-table th,
+  .medicine-table td {
+    border: 1px solid #777;
+    padding: 3px;
+    text-align: center;
+    vertical-align: top;
+  }
+
+  .mini-table th,
+  .medicine-table th {
+    background: #f0f0f0 !important;
+    font-weight: 800;
+  }
+
+  .medicine-table td:nth-child(2) {
+    text-align: left;
+  }
+
+  .muted {
+    color: #555;
+  }
+
+  .opd-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    padding-top: 12px;
+    page-break-inside: avoid;
+  }
+
+  .signature {
+    min-width: 170px;
+    text-align: center;
+    padding-top: 32px;
+  }
+}
+
+
+/* Refraction -Vision */
+@media print {
+  body.print-refraction-only .screen-only {
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  body.print-refraction-only .print-only {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  body.print-refraction-only * {
+    visibility: hidden !important;
+  }
+
+  body.print-refraction-only .refraction-print-area,
+  body.print-refraction-only .refraction-print-area * {
+    visibility: visible !important;
+  }
+
+  body.print-refraction-only .refraction-print-area {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 14px !important;
+    width: 100% !important;
+    background: white !important;
+    padding: 0 !important;
+  }
+
+  body.print-refraction-only .no-print,
+  body.print-refraction-only .sticky,
+  body.print-refraction-only .refraction-print-area button {
+    display: none !important;
+  }
+
+  body.print-refraction-only .refraction-print-area input,
+  body.print-refraction-only .refraction-print-area textarea,
+  body.print-refraction-only .refraction-print-area select {
+    border: none !important;
+    background: transparent !important;
+    color: #111 !important;
+    pointer-events: none !important;
+  }
+
+  body.print-refraction-only .refraction-page {
+    background: white !important;
+    padding: 0 !important;
+  }
+}

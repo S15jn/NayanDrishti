@@ -4,14 +4,35 @@ const API = axios.create({
   baseURL: "http://localhost:5000/api",
 });
 
-API.interceptors.request.use((req) => {
-  const token = localStorage.getItem("token");
+/* =========================
+   REQUEST INTERCEPTOR
+========================= */
+API.interceptors.request.use(
+  (req) => {
+    const token = localStorage.getItem("token");
 
-  if (token) {
-    req.headers.Authorization = `Bearer ${token}`;
-  }
+    if (token) {
+      req.headers.Authorization = `Bearer ${token}`;
+    }
 
-  return req;
-});
+    return req;
+  },
+  (error) => Promise.reject(error),
+);
+
+/* =========================
+   RESPONSE INTERCEPTOR
+========================= */
+API.interceptors.response.use(
+  (response) => response,
+
+  (error) => {
+    if (error.response?.status === 401) {
+      console.log("Unauthorized access");
+    }
+
+    return Promise.reject(error);
+  },
+);
 
 export default API;

@@ -1,8 +1,7 @@
 import History from "../../components/History/History";
 import Refraction from "../../components/Refraction/Refraction";
 import Examination from "../../components/Examination/Examination";
-import Diagnosis from "../../components/Diagnosis";
-import Medication from "../../components/MedicationSection";
+import Advice from "../../components/Advice/Advice";
 
 const TabContent = ({
   activeTab,
@@ -12,7 +11,7 @@ const TabContent = ({
   status,
 }) => {
   return (
-    <div className="bg-white p-4 rounded shadow">
+    <div className="animate-fadeIn">
       {activeTab === "history" && (
         <History
           data={formData.history}
@@ -40,24 +39,10 @@ const TabContent = ({
         />
       )}
 
-      {activeTab === "diagnosis" && (
-        <Diagnosis
-          data={formData}
-          setData={(v) => {
-            if (typeof v === "function") {
-              const next = v(formData);
-              Object.keys(next).forEach((key) => updateFormData(key, next[key]));
-            }
-          }}
-          saveNow={saveNow}
-          status={status}
-        />
-      )}
-
-      {activeTab === "medical" && (
-        <Medication
-          data={formData.medical}
-          setData={(v) => updateFormData("medical", v)}
+      {activeTab === "advice" && (
+        <Advice
+          data={formData.advice}
+          setData={(v) => updateFormData("advice", v)}
           saveNow={saveNow}
           status={status}
         />

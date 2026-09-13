@@ -2,9 +2,31 @@ import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
+const MAX_FAILED_ATTEMPTS = 5;
+const LOCK_TIME_MS = 15 * 60 * 1000;
+
+const normalizeEmail = (email = "") => String(email).trim().toLowerCase();
+const normalizeStaffId = (staffId = "") => String(staffId).trim().toUpperCase();
+const normalizeRole = (role = "") => String(role).trim().toLowerCase();
+const escapeRegex = (value = "") =>
+  String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const signToken = (user) => {
+  return jwt.sign(
+    {
+      id: user._id,
+      staffId: user.staffId,
+      role: user.role,
+    },
+    process.env.JWT_SECRET || "secretkey",
+    { expiresIn: "8h" },
+  );
+};
+
 export const login = async (req, res) => {
   try {
     const { staffId, email, password, role } = req.body;
+    const requestedRole = normalizeRole(role);
 
     if (!staffId || !email || !password || !role) {
       return res.status(400).json({
@@ -12,16 +34,31 @@ export const login = async (req, res) => {
       });
     }
 
+    const normalizedStaffId = normalizeStaffId(staffId);
+    const normalizedEmail = normalizeEmail(email);
+
     const user = await User.findOne({
-      staffId: staffId.trim().toUpperCase(),
-      email: email.trim().toLowerCase(),
-    }).select("+password");
+      staffId: {
+        $regex: `^\\s*${escapeRegex(normalizedStaffId)}\\s*$`,
+        $options: "i",
+      },
+      email: {
+        $regex: `^\\s*${escapeRegex(normalizedEmail)}\\s*$`,
+        $options: "i",
+      },
+    }).select("+password +failedLoginAttempts +lockUntil");
 
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    if (user.role !== role) {
+    if (user.lockUntil && user.lockUntil > new Date()) {
+      return res.status(423).json({
+        message: "Account temporarily locked. Try again later.",
+      });
+    }
+
+    if (normalizeRole(user.role) !== requestedRole) {
       return res.status(403).json({ message: "Invalid role" });
     }
 
@@ -29,21 +66,34 @@ export const login = async (req, res) => {
       return res.status(403).json({ message: "Account is disabled" });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isHashedPassword = String(user.password || "").startsWith("$2");
+    const isMatch = isHashedPassword
+      ? await bcrypt.compare(password, user.password)
+      : password === user.password;
 
     if (!isMatch) {
+      user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
+
+      if (user.failedLoginAttempts >= MAX_FAILED_ATTEMPTS) {
+        user.lockUntil = new Date(Date.now() + LOCK_TIME_MS);
+      }
+
+      await user.save();
+
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const token = jwt.sign(
-      {
-        id: user._id,
-        staffId: user.staffId,
-        role: user.role,
-      },
-      process.env.JWT_SECRET || "secretkey",
-      { expiresIn: "8h" },
-    );
+    user.failedLoginAttempts = 0;
+    user.lockUntil = null;
+    user.lastLoginAt = new Date();
+
+    if (!isHashedPassword) {
+      user.password = await bcrypt.hash(password, 12);
+    }
+
+    await user.save();
+
+    const token = signToken(user);
 
     return res.json({
       token,
@@ -56,7 +106,8 @@ export const login = async (req, res) => {
       },
     });
   } catch (err) {
-    return res.status(500).json({ message: err.message });
+    console.error("LOGIN ERROR:", err.message);
+    return res.status(500).json({ message: "Login failed" });
   }
 };
 

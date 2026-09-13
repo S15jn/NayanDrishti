@@ -1,56 +1,78 @@
-const PatientHeader = ({ selected, isComplete, handleFinalSave, status }) => {
+const PatientHeader = ({
+  selected,
+  isComplete,
+  handleFinalSave,
+  handlePrintPrescription,
+  status,
+}) => {
   return (
-    <div className="bg-white p-4 rounded shadow mb-4 flex justify-between items-center">
-
-      {/* LEFT: PATIENT INFO */}
-      <div>
-        <h2 className="text-lg font-bold">
-          {selected?.patientId?.name || "Patient"}
-        </h2>
-        <p className="text-sm text-gray-600">
-          {selected?.patientId?.mobile || "--"}
-        </p>
-      </div>
-
-      {/* RIGHT: STATUS + BUTTON */}
-      <div className="flex items-center gap-4">
-
-        {/* 🔥 SAVE STATUS */}
-        {status === "saving" && (
-          <span className="text-blue-500 animate-pulse">
-            Saving...
+    <div className="p-6">
+      <div className="flex justify-between flex-wrap gap-4">
+        <div>
+          <h2 className="text-2xl font-bold">
+            {selected?.patientId?.name}
+          </h2>
+ <div className="flex gap-4 mt-2">
+  <span className="text-slate-500">
+            <b>Age:</b>  {selected?.patientId?.age}
           </span>
-        )}
-
-        {status === "saved" && (
-          <span className="text-green-600">
-            ✔ Saved
+ <span className="text-slate-500">
+            <b>Gender:</b>  {selected?.patientId?.gender}
           </span>
-        )}
-
-        {status === "error" && (
-          <span className="text-red-500">
-            ❌ Error
+          <span className="text-slate-500">
+           <b> Mobile No.:</b> {selected?.patientId?.mobile}
           </span>
-        )}
+ </div>
+         
 
-        {/* 🔥 BUTTON */}
-        {isComplete ? (
+          <div className="flex gap-2 mt-3">
+            <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs">
+              Active Consultation
+            </span>
+
+            <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs">
+              Token #{selected?.token}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div>
+            {status === "saving" && (
+              <span className="text-blue-500">
+                Saving...
+              </span>
+            )}
+
+            {status === "saved" && (
+              <span className="text-green-600">
+                Auto Saved
+              </span>
+            )}
+          </div>
+
           <button
+            onClick={handlePrintPrescription}
+            className="bg-indigo-600 text-white px-5 py-2 rounded-xl"
+          >
+            Print
+          </button>
+
+          <button
+            disabled={!isComplete}
             onClick={handleFinalSave}
-            className="bg-green-600 text-white px-4 py-2 rounded"
+            className={`
+              px-5 py-2 rounded-xl text-white
+              ${
+                isComplete
+                  ? "bg-green-600 hover:bg-green-700"
+                  : "bg-gray-400"
+              }
+            `}
           >
-            Save & Print
+            Save & Complete
           </button>
-        ) : (
-          <button
-            className="bg-gray-300 px-4 py-2 rounded"
-            disabled
-          >
-            Fill Required Fields
-          </button>
-        )}
-
+        </div>
       </div>
     </div>
   );
