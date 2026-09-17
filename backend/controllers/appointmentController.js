@@ -1,9 +1,9 @@
-
 import Patient from "../models/Patient.js";
 import Appointment from "../models/Appointment.js";
 import Counter from "../models/Counter.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { sendWhatsApp } from "../utils/sendWhatsApp.js";
+import User from "../models/User.js";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const mobileRegex = /^[6-9]\d{9}$/;
@@ -14,11 +14,9 @@ const CONSULTATION_AMOUNT = 500;
 const normalizeMobile = (mobile = "") =>
   String(mobile).replace(/\D/g, "").slice(-10);
 
-const normalizeEmail = (email = "") =>
-  String(email).trim().toLowerCase();
+const normalizeEmail = (email = "") => String(email).trim().toLowerCase();
 
-const normalizeText = (value = "") =>
-  String(value).trim();
+const normalizeText = (value = "") => String(value).trim();
 
 const normalizeGender = (gender = "") => {
   const value = normalizeText(gender).toLowerCase();
@@ -30,8 +28,7 @@ const normalizeGender = (gender = "") => {
   return normalizeText(gender);
 };
 
-const normalizeTime = (time = "") =>
-  normalizeText(time);
+const normalizeTime = (time = "") => normalizeText(time);
 
 const validatePatientInput = ({
   name,
@@ -51,7 +48,14 @@ const validatePatientInput = ({
   const cleanSpecialization = normalizeText(specialization || "Eye");
   const cleanAge = Number(age);
 
-  if (!cleanName || !cleanMobile || age === "" || !cleanGender || !date || !cleanTime) {
+  if (
+    !cleanName ||
+    !cleanMobile ||
+    age === "" ||
+    !cleanGender ||
+    !date ||
+    !cleanTime
+  ) {
     return "Required fields missing";
   }
 
@@ -224,6 +228,28 @@ Amount: Rs ${finalAmount}
     token,
   }).catch((err) => console.log("WhatsApp failed:", err.message));
 };
+const resolveDoctorId = async (doctorId, specialization) => {
+  // If doctorId is already provided, use it
+  if (doctorId) {
+    return doctorId;
+  }
+
+  // Otherwise automatically find active doctor
+  const doctor = await User.findOne({
+    role: "doctor",
+    isActive: true,
+    specialization: {
+      $regex: `^${String(specialization || "Eye").trim()}$`,
+      $options: "i",
+    },
+  }).select("_id");
+
+  if (!doctor) {
+    throw new Error("No active doctor found for this specialization");
+  }
+
+  return doctor._id;
+};
 
 const createAppointment = async ({
   body,
@@ -243,6 +269,11 @@ const createAppointment = async ({
   const cleanSpecialization = normalizeText(body.specialization || "Eye");
   const selectedDate = getSelectedDate(body.date);
 
+  const resolvedDoctorId = await resolveDoctorId(
+    body.doctorId,
+    cleanSpecialization,
+  );
+
   const minute = Number(cleanTime.split(":")[1]);
   const slotAllowed = requireSlotRule(minute);
 
@@ -261,7 +292,7 @@ const createAppointment = async ({
   const existing = await Appointment.findOne({
     date: selectedDate,
     time: cleanTime,
-    doctorId: body.doctorId || null,
+    doctorId: resolvedDoctorId,
     status: { $ne: "Cancelled" },
   });
 
@@ -280,11 +311,10 @@ const createAppointment = async ({
     return { error: payment.error, status: 400 };
   }
 
-  const token = await getNextToken(selectedDate, body.doctorId || "global");
-
+  const token = await getNextToken(selectedDate, String(resolvedDoctorId));
   const appointment = await Appointment.create({
     patientId: patient._id,
-    doctorId: body.doctorId || null,
+    doctorId: resolvedDoctorId,
     date: selectedDate,
     time: cleanTime,
     specialization: cleanSpecialization,
