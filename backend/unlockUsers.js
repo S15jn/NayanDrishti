@@ -5,7 +5,7 @@ import mongoose from "mongoose";
 import User from "./models/User.js";
 
 const mongoUri =
-  process.env.MONGO_URI || "mongodb://127.0.0.1:27017/nayan-drishti";
+  process.env.MONGO_URI;
 
 try {
   await mongoose.connect(mongoUri);

@@ -50,12 +50,6 @@ function Login() {
         staffId:
           form.staffId.trim().toUpperCase(),
 
-        email: form.email
-          .trim()
-          .toLowerCase(),
-
-        password: form.password,
-
         role: form.role,
       };
 
