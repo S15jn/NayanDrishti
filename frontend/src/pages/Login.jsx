@@ -5,8 +5,7 @@ import API from "../services/api";
 function Login() {
   const navigate = useNavigate();
 
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState({
     staffId: "",
@@ -30,96 +29,116 @@ function Login() {
   ========================= */
   const handleLogin = async () => {
     try {
+      /* =========================
+         VALIDATION
+      ========================= */
       if (
-        !form.staffId ||
-        !form.email ||
+        !form.staffId.trim() ||
+        !form.email.trim() ||
         !form.password ||
         !form.role
       ) {
         return alert(
-          "Please fill all fields",
+          "Staff ID, email, password and role are required"
         );
       }
 
       setLoading(true);
 
       /* =========================
-         CLEAN PAYLOAD
+         LOGIN PAYLOAD
       ========================= */
       const payload = {
-        staffId:
-          form.staffId.trim().toUpperCase(),
-
+        staffId: form.staffId.trim().toUpperCase(),
+        email: form.email.trim().toLowerCase(),
+        password: form.password,
         role: form.role,
       };
 
-      console.log(
-        "LOGIN PAYLOAD:",
-        payload,
-      );
+      /*
+       * Do NOT console.log payload.
+       * Password should never be printed in console.
+       */
 
+      /* =========================
+         API LOGIN
+      ========================= */
       const res = await API.post(
         "/auth/login",
-        payload,
-      );
-
-      console.log(
-        "LOGIN RESPONSE:",
-        res.data,
+        payload
       );
 
       /* =========================
-         SAVE USER DATA
+         CHECK RESPONSE
+      ========================= */
+      if (!res.data || !res.data.token || !res.data.user) {
+        throw new Error("Invalid server response");
+      }
+
+      const user = res.data.user;
+
+      /* =========================
+         SAVE AUTH DATA
       ========================= */
       localStorage.setItem(
         "token",
-        res.data.token,
+        res.data.token
       );
 
       localStorage.setItem(
         "role",
-        res.data.user.role,
+        user.role
       );
 
       localStorage.setItem(
         "staffId",
-        res.data.user.staffId,
+        user.staffId
       );
 
       localStorage.setItem(
         "user",
-        JSON.stringify(res.data.user),
+        JSON.stringify(user)
       );
 
-      localStorage.setItem(
-        "doctor",
-        JSON.stringify(res.data.user),
-      );
+      /* =========================
+         DOCTOR DATA
+         Only save if doctor
+      ========================= */
+      if (user.role === "doctor") {
+        localStorage.setItem(
+          "doctor",
+          JSON.stringify(user)
+        );
+      } else {
+        localStorage.removeItem("doctor");
+      }
 
       /* =========================
          NAVIGATION
       ========================= */
-      if (
-        res.data.user.role === "admin"
-      ) {
+      if (user.role === "admin") {
         navigate("/admin");
-      } else if (
-        res.data.user.role === "doctor"
-      ) {
+      } else if (user.role === "doctor") {
         navigate("/doctor");
-      } else {
+      } else if (user.role === "receptionist") {
         navigate("/reception");
+      } else {
+        alert("Invalid user role");
       }
-    } catch (err) {
-      console.log(
-        "LOGIN ERROR:",
-        err.response?.data,
-      );
 
-      alert(
+    } catch (err) {
+      /*
+       * Do NOT print password,
+       * email or complete payload.
+       */
+
+      const message =
         err.response?.data?.message ||
-          "Invalid credentials",
-      );
+        err.message ||
+        "Invalid credentials";
+
+      alert(message);
+
     } finally {
       setLoading(false);
     }
@@ -128,6 +147,7 @@ function Login() {
   return (
     <div className="flex h-screen justify-center items-center bg-gray-100">
       <div className="bg-white p-6 rounded-xl shadow-md w-80">
+
         {/* =========================
             TITLE
         ========================= */}
@@ -144,6 +164,7 @@ function Login() {
           name="staffId"
           value={form.staffId}
           onChange={handleChange}
+          autoComplete="username"
         />
 
         {/* =========================
@@ -156,6 +177,7 @@ function Login() {
           name="email"
           value={form.email}
           onChange={handleChange}
+          autoComplete="email"
         />
 
         {/* =========================
@@ -168,12 +190,14 @@ function Login() {
           name="password"
           value={form.password}
           onChange={handleChange}
+          autoComplete="current-password"
         />
 
         {/* =========================
             ROLE SELECTOR
         ========================= */}
         <div className="flex justify-between gap-2 mb-4">
+
           {[
             "admin",
             "doctor",
@@ -197,6 +221,7 @@ function Login() {
               {role}
             </button>
           ))}
+
         </div>
 
         {/* =========================
@@ -206,7 +231,11 @@ function Login() {
           type="button"
           disabled={loading}
           onClick={handleLogin}
-          className="bg-green-500 hover:bg-green-600 text-white w-full py-2 rounded transition"
+          className={`${
+            loading
+              ? "bg-green-400 cursor-not-allowed"
+              : "bg-green-500 hover:bg-green-600"
+          } text-white w-full py-2 rounded transition`}
         >
           {loading
             ? "Logging in..."
@@ -214,12 +243,12 @@ function Login() {
         </button>
 
         {/* =========================
-            DEBUG HELP
+            HELP TEXT
         ========================= */}
         <div className="mt-4 text-xs text-gray-500 text-center">
-          Use exact Staff ID, Email &
-          Role
+          Use exact Staff ID, Email & Role
         </div>
+
       </div>
     </div>
   );
