@@ -558,7 +558,6 @@ function GlassesPrescription({ data, updateRx }) {
     </div>
   );
 }
-
 function EyePanel({ eye, title, data, updateEye, copyBothEyesToGlasses }) {
   const updateSection = (section, value) => {
     updateEye({
@@ -643,7 +642,6 @@ export default function Refraction({ data = {}, setData, saveNow, status }) {
       right: safeEye(prev.left),
     }));
   };
-
   const copyBothEyesToGlasses = (sourceKey) => {
     setData((prev = {}) => {
       const currentRight = safeEye(prev.right);
@@ -691,6 +689,8 @@ export default function Refraction({ data = {}, setData, saveNow, status }) {
     });
   };
 
+
+ 
  return (
   <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
     <div className="max-w-[1900px] mx-auto p-6 space-y-6">
@@ -825,17 +825,19 @@ export default function Refraction({ data = {}, setData, saveNow, status }) {
         "
       >
         <EyePanel
+          eye="right"
           title="RIGHT EYE (OD)"
           data={right}
-          setData={(value) => updateEye("right", value)}
-          copyFrom={left}
+          updateEye={(value) => updateEye("right", value)}
+          copyBothEyesToGlasses={copyBothEyesToGlasses}
         />
 
         <EyePanel
+          eye="left"
           title="LEFT EYE (OS)"
           data={left}
-          setData={(value) => updateEye("left", value)}
-          copyFrom={right}
+          updateEye={(value) => updateEye("left", value)}
+          copyBothEyesToGlasses={copyBothEyesToGlasses}
         />
       </div>
 

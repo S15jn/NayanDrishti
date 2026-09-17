@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import API from "../services/api";
 
 function ReceptionDashboard() {
@@ -88,25 +88,25 @@ function ReceptionDashboard() {
      LOAD TODAY APPOINTMENTS
   ========================= */
 
-  const loadToday = async () => {
-    try {
-      setLoading(true);
+const loadToday = useCallback(async () => {
+  try {
+    setLoading(true);
 
-      const res = await API.get(
-        "/appointments/today",
-      );
+    const res = await API.get(
+      "/appointments/today",
+    );
 
-      setPatients(res.data || []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    setPatients(res.data || []);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+}, []);
 
-  useEffect(() => {
-    loadToday();
-  }, []);
+useEffect(() => {
+  loadToday();
+}, [loadToday]);
 
   /* =========================
      BOOK APPOINTMENT
@@ -177,6 +177,17 @@ function ReceptionDashboard() {
   /* =========================
      SEARCH
   ========================= */
+const handleSearch = useCallback(async () => {
+  try {
+    const res = await API.get(
+      `/appointments/search?query=${search.trim()}`,
+    );
+
+    setPatients(res.data || []);
+  } catch (err) {
+    console.error(err);
+  }
+}, [search]);
 
   useEffect(() => {
     const delay = setTimeout(() => {
@@ -188,19 +199,9 @@ function ReceptionDashboard() {
     }, 400);
 
     return () => clearTimeout(delay);
-  }, [search]);
+  }, [search, loadToday, handleSearch]);
 
-  const handleSearch = async () => {
-    try {
-      const res = await API.get(
-        `/appointments/search?query=${search.trim()}`,
-      );
-
-      setPatients(res.data || []);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+ 
 
   /* =========================
      LOGOUT
