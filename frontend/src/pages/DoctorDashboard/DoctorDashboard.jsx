@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect,useRef } from "react";
 import API from "../../services/api";
 import useAutoSave from "../../hooks/useAutoSave";
 import Header from "./Header";
@@ -17,7 +17,7 @@ function DoctorDashboard() {
   const [showHistory, setShowHistory] = useState(false);
   const [completedIds, setCompletedIds] = useState([]);
   const [doctor, setDoctor] = useState(null);
-
+const selectionRequestRef = useRef(0);
   const [formData, setFormData] = useState({
     patientId: "",
     appointmentId: "",
@@ -30,7 +30,12 @@ function DoctorDashboard() {
     medical: {},
   });
 
-  const { status, saveNow } = useAutoSave(formData, activeTab);
+  //const { status, saveNow } = useAutoSave(formData, activeTab);
+  const { status, saveNow } = useAutoSave(
+  formData,
+  activeTab,
+  2000
+);
 
   useEffect(() => {
     API.get("/appointments/today").then((res) => setPatients(res.data || []));
@@ -45,31 +50,100 @@ function DoctorDashboard() {
     }
   }, []);
 
-  const handleSelect = async (item) => {
-    setSelected(item);
+  // const handleSelect = async (item) => {
+  //   setSelected(item);
 
-    const res = await API.get(`/records/${item.patientId?._id}`);
-    const patientRecords = res.data || [];
-    setRecords(patientRecords);
+  //   const res = await API.get(`/records/${item.patientId?._id}`);
+  //   const patientRecords = res.data || [];
+  //   setRecords(patientRecords);
+
+  //   const currentRecord = patientRecords.find(
+  //     (record) => String(record.appointmentId) === String(item._id),
+  //   );
+
+  //   setFormData({
+  //     patientId: item.patientId?._id || "",
+  //     appointmentId: item._id || "",
+  //     history: currentRecord?.history || {},
+  //     refraction: currentRecord?.refraction || {},
+  //     examination: currentRecord?.examination || {},
+  //     diagnosis: currentRecord?.diagnosis || "",
+  //     prescription: currentRecord?.prescription || "",
+  //     followUpDate: currentRecord?.followUpDate
+  //       ? currentRecord.followUpDate.slice(0, 10)
+  //       : "",
+  //     medical: currentRecord?.medical || {},
+  //   });
+  // };
+
+const handleSelect = async (item) => {
+  const requestId = ++selectionRequestRef.current;
+
+  setSelected(item);
+  setRecords([]);
+
+ // const patientId = item.patientId?._id;
+ const patientId =item.patientId?._id || item.patientId;
+
+  if (!patientId || !item._id) {
+    console.error("Missing patientId or appointmentId", item);
+    return;
+  }
+
+  try {
+    const res = await API.get(`/records/${patientId}`);
+
+    // Ignore a response belonging to an older selection.
+    if (requestId !== selectionRequestRef.current) return;
+
+    const patientRecords = Array.isArray(res.data) ? res.data : [];
+
+    const getAppointmentId = (record) =>
+      String(record.appointmentId?._id ?? record.appointmentId ?? "");
 
     const currentRecord = patientRecords.find(
-      (record) => String(record.appointmentId) === String(item._id),
+      (record) => getAppointmentId(record) === String(item._id)
+    );
+
+    // Show previous visits, not the currently selected appointment.
+    setRecords(
+      patientRecords.filter(
+        (record) => getAppointmentId(record) !== String(item._id)
+      )
     );
 
     setFormData({
-      patientId: item.patientId?._id || "",
-      appointmentId: item._id || "",
+      patientId: String(patientId),
+      appointmentId: String(item._id),
       history: currentRecord?.history || {},
       refraction: currentRecord?.refraction || {},
       examination: currentRecord?.examination || {},
       diagnosis: currentRecord?.diagnosis || "",
       prescription: currentRecord?.prescription || "",
       followUpDate: currentRecord?.followUpDate
-        ? currentRecord.followUpDate.slice(0, 10)
+        ? String(currentRecord.followUpDate).slice(0, 10)
         : "",
       medical: currentRecord?.medical || {},
+      advice: currentRecord?.advice || {
+        diagnosis: {
+          diagnosis: currentRecord?.diagnosis || "",
+          prescription: currentRecord?.prescription || "",
+        },
+        medical: currentRecord?.medical || {},
+        followUp: {},
+      },
     });
-  };
+  } catch (err) {
+    if (requestId !== selectionRequestRef.current) return;
+
+    console.error("Patient history fetch failed:", err);
+    setRecords([]);
+    alert(
+      err.response?.data?.message ||
+      "Patient history fetch nahi ho paayi. Please try again."
+    );
+  }
+};
 
   const updateFormData = (section, value) => {
     setFormData((prev) => ({

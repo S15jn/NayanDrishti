@@ -1,3 +1,4 @@
+
 import React from "react";
 
 const maculaOptions = [
@@ -30,6 +31,41 @@ const maculaOptions = [
 
 const statusOptions = ["Normal", "Abnormal"];
 
+const fieldClass =
+  "min-h-[42px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
+
+const Field = React.memo(function Field({ label, keyName, data, update }) {
+  return (
+    <div className="grid gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 md:grid-cols-[0.8fr_1fr_1.4fr] md:items-center">
+      <label className="text-sm font-semibold text-slate-700">
+        {label}
+      </label>
+
+      <select
+        value={data[keyName] || ""}
+        onChange={(event) => update(keyName, event.target.value)}
+        className={fieldClass}
+      >
+        <option value="">Select</option>
+        {statusOptions.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+
+      <input
+        value={data[`${keyName}_comment`] || ""}
+        onChange={(event) =>
+          update(`${keyName}_comment`, event.target.value)
+        }
+        placeholder="Comment"
+        className={fieldClass}
+      />
+    </div>
+  );
+});
+
 const Fundus = ({ data = {}, setData, title }) => {
   const update = (key, value) => {
     setData((prev = {}) => ({
@@ -47,32 +83,6 @@ const Fundus = ({ data = {}, setData, title }) => {
     update("macula", updated);
   };
 
-  const Field = ({ label, keyName }) => (
-    <div className="grid gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 md:grid-cols-[0.8fr_1fr_1.4fr] md:items-center">
-      <label className="text-sm font-semibold text-slate-700">{label}</label>
-
-      <select
-        value={data[keyName] || ""}
-        onChange={(event) => update(keyName, event.target.value)}
-        className="min-h-[42px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-      >
-        <option value="">Select</option>
-        {statusOptions.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
-      </select>
-
-      <input
-        value={data[`${keyName}_comment`] || ""}
-        onChange={(event) => update(`${keyName}_comment`, event.target.value)}
-        placeholder="Comment"
-        className="min-h-[42px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-      />
-    </div>
-  );
-
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="flex flex-col gap-3 border-b border-slate-100 bg-slate-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
@@ -86,7 +96,7 @@ const Fundus = ({ data = {}, setData, title }) => {
         <select
           value={data.overall || ""}
           onChange={(event) => update("overall", event.target.value)}
-          className="min-h-[40px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+          className={fieldClass}
         >
           <option value="">Overall</option>
           <option value="Normal">Normal</option>
@@ -95,12 +105,12 @@ const Fundus = ({ data = {}, setData, title }) => {
       </div>
 
       <div className="space-y-3 p-5">
-        <Field label="Media" keyName="media" />
-        <Field label="PVD" keyName="pvd" />
-        <Field label="Disc Size" keyName="discSize" />
-        <Field label="C/D Ratio" keyName="cdr" />
-        <Field label="Optic Disc" keyName="opticDisc" />
-        <Field label="Blood Vessels" keyName="vessels" />
+        <Field label="Media" keyName="media" data={data} update={update} />
+        <Field label="PVD" keyName="pvd" data={data} update={update} />
+        <Field label="Disc Size" keyName="discSize" data={data} update={update} />
+        <Field label="C/D Ratio" keyName="cdr" data={data} update={update} />
+        <Field label="Optic Disc" keyName="opticDisc" data={data} update={update} />
+        <Field label="Blood Vessels" keyName="vessels" data={data} update={update} />
 
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
           <div className="mb-3 flex items-center justify-between gap-3">
@@ -114,7 +124,8 @@ const Fundus = ({ data = {}, setData, title }) => {
 
           <div className="flex flex-wrap gap-2">
             {maculaOptions.map((item) => {
-              const selected = data.macula?.includes(item);
+              const selected = Array.isArray(data.macula) &&
+                data.macula.includes(item);
 
               return (
                 <button
@@ -139,11 +150,13 @@ const Fundus = ({ data = {}, setData, title }) => {
           <label className="mb-2 block text-sm font-semibold text-slate-700">
             Fundus Comments
           </label>
+
           <textarea
             value={data.comments || ""}
             onChange={(event) => update("comments", event.target.value)}
             placeholder="Add fundus notes..."
-            className="min-h-[100px] w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+            rows={4}
+            className="w-full resize-y rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
           />
         </div>
       </div>

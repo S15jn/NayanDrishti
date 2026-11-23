@@ -62,9 +62,7 @@ const patientSchema = new mongoose.Schema(
       index: true,
     },
   },
-  {
-    timestamps: true,
-  },
+ 
 );
 
 patientSchema.index({ name: "text", mobile: "text" });

@@ -22,9 +22,7 @@ const counterSchema = new mongoose.Schema(
       min: 0,
     },
   },
-  {
-    timestamps: true,
-  },
+ 
 );
 
 counterSchema.index({ date: 1, scope: 1 }, { unique: true });

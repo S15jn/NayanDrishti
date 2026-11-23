@@ -90,7 +90,7 @@ const MedicationSection = ({ data = {}, setData }) => {
               value={store}
               onChange={(event) => updateStore(event.target.value)}
             >
-              <option>Ground Floor Pharmacy</option>
+              <option> Pharmacy</option>
             </select>
           </div>
         </div>
@@ -162,11 +162,11 @@ const MedicationSection = ({ data = {}, setData }) => {
                       }
                     >
                       <option value="">Select</option>
-                      <option>1-0-1</option>
-                      <option>0-1-0</option>
-                      <option>1-1-1</option>
-                      <option>1-0-0</option>
-                      <option>0-0-1</option>
+  {Array.from({ length: 100 }, (_, i) => (
+    <option key={i + 1} value={i + 1}>
+      {i + 1}
+    </option>
+  ))}
                     </select>
                   </td>
 
@@ -178,12 +178,25 @@ const MedicationSection = ({ data = {}, setData }) => {
                         handleChange(index, "duration", event.target.value)
                       }
                     >
-                      <option value="">Select</option>
-                      <option>3 Days</option>
-                      <option>5 Days</option>
-                      <option>7 Days</option>
-                      <option>2 Weeks</option>
-                      <option>1 Month</option>
+                       <option value="">Select</option>
+
+  {Array.from({ length: 31 }, (_, i) => (
+    <option key={`day-${i + 1}`} value={`${i + 1} Days`}>
+      {i + 1} Days
+    </option>
+  ))}
+
+  {Array.from({ length: 4 }, (_, i) => (
+    <option key={`week-${i + 1}`} value={`${i + 1} Weeks`}>
+      {i + 1} Weeks
+    </option>
+  ))}
+
+  {Array.from({ length: 12 }, (_, i) => (
+    <option key={`month-${i + 1}`} value={`${i + 1} Months`}>
+      {i + 1} Months
+    </option>
+  ))}
                     </select>
                   </td>
 

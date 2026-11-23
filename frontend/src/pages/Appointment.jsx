@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-
+import API from "../services/api";
 const Appointment = () => {
   const navigate = useNavigate();
 
@@ -12,7 +12,7 @@ const Appointment = () => {
     age: "",
     gender: "",
     date: "",
-    time: "",
+    // time: "",
     specialization: "",
 
     paymentMode: "ONLINE",
@@ -55,61 +55,54 @@ const Appointment = () => {
   /* =========================
      SUBMIT
   ========================= */
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+ 
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    try {
-      const minute = Number(form.time.split(":")[1]);
+  if (loading) return;
 
-      if (Number.isNaN(minute) || minute % 10 !== 5) {
-        return alert(
-          "Please select a valid user slot ending with 05, 15, 25, 35, 45, or 55",
-        );
-      }
+  try {
+    setLoading(true);
+    setSuccess("");
 
-      setLoading(true);
+   const res = await API.post("/appointments/book", {
+  ...form,
+  bookedBy: "USER",
+});
 
-      await axios.post(
-        "http://localhost:5000/api/appointments/book",
-        {
-          ...form,
-          bookedBy: "USER",
-        },
-      );
+    setSuccess("Appointment booked successfully!");
 
-      setSuccess("Appointment booked successfully!");
+    setForm({
+      name: "",
+      mobile: "",
+      email: "",
+      age: "",
+      gender: "",
+      date: "",
+      specialization: "",
+      paymentMode: "ONLINE",
+      couponCode: "",
+    });
 
-      setForm({
-        name: "",
-        mobile: "",
-        email: "",
-        age: "",
-        gender: "",
-        date: "",
-        time: "",
-        specialization: "",
+    setFinalAmount(500);
 
-        paymentMode: "ONLINE",
-        couponCode: "",
-      });
+    setTimeout(() => {
+      navigate("/home");
+    }, 2000);
+  } catch (err) {
+    console.error("Appointment booking error:", err);
 
-      setFinalAmount(500);
+    alert(
+      err.response?.data?.message ||
+        err.message ||
+        "Booking failed. Please try again."
+    );
+  } finally {
+    setLoading(false);
+  }
+}
 
-      setTimeout(() => {
-        navigate("/home");
-      }, 2000);
-    } catch (err) {
-      console.log(err.response?.data);
 
-      alert(
-        err.response?.data?.message ||
-          err.message ||
-          "Booking failed. Please check backend server is running.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -222,25 +215,6 @@ const Appointment = () => {
             onChange={handleChange}
             required
           />
-
-          {/* TIME */}
-          <input
-            type="time"
-            name="time"
-            value={form.time}
-            min="00:05"
-            step="600"
-            className="w-full border p-2 rounded"
-            onChange={handleChange}
-            required
-          />
-
-          {/* SLOT INFO */}
-          <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
-            User booking allowed only on:
-            <br />
-            05, 15, 25, 35, 45, 55 minutes
-          </div>
 
           {/* PAYMENT MODE */}
           <select

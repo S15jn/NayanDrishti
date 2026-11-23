@@ -289,6 +289,20 @@ const Examination = ({ data = {}, setData, saveNow, status }) => {
                       updateSquintNested("right", "extraOcular", "squint", value)
                     }
                   />
+                  <textarea
+  placeholder="Right Eye Squint Comments"
+  value={examData.right.squint.extraOcular.comment || ""}
+  onChange={(e) =>
+    updateSquintNested(
+      "right",
+      "extraOcular",
+      "comment",
+      e.target.value
+    )
+  }
+  className="mt-3 min-h-24 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+  rows={3}
+/>
                 </div>
               </div>
 
@@ -320,6 +334,20 @@ const Examination = ({ data = {}, setData, saveNow, status }) => {
                         updateSquintNested("left", "extraOcular", "bi", value)
                       }
                     />
+                      <textarea
+  placeholder="Left Eye Squint Comments"
+  value={examData.left.squint.extraOcular.comment || ""}
+  onChange={(e) =>
+    updateSquintNested(
+      "left",
+      "extraOcular",
+      "comment",
+      e.target.value
+    )
+  }
+  className="mt-3 min-h-24 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+  rows={3}
+/>
                   </div>
                 </div>
               </div>
@@ -345,6 +373,7 @@ const Examination = ({ data = {}, setData, saveNow, status }) => {
                 value={examData.right.squint.stereopsis}
                 onChange={(value) => updateSquint("right", "stereopsis", value)}
               />
+            
             </div>
           </div>
         </div>

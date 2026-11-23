@@ -13,7 +13,7 @@ const Header = ({ doctor }) => {
 
           <div>
             <h1 className="text-2xl font-bold">
-              Dr. {doctor?.name || "Doctor"}
+              Dr. {doctor?.name || "Samyak Jain"}
             </h1>
 
             <p className="text-blue-100">

@@ -7,7 +7,6 @@ import User from "../models/User.js";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const mobileRegex = /^[6-9]\d{9}$/;
-const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 const CONSULTATION_AMOUNT = 500;
 
@@ -28,7 +27,77 @@ const normalizeGender = (gender = "") => {
   return normalizeText(gender);
 };
 
-const normalizeTime = (time = "") => normalizeText(time);
+// const validatePatientInput = ({
+//   name,
+//   mobile,
+//   email,
+//   age,
+//   gender,
+//   date,
+//   specialization,
+// }) => {
+//   const cleanName = normalizeText(name);
+//   const cleanMobile = normalizeMobile(mobile);
+//   const cleanEmail = normalizeEmail(email);
+//   const cleanGender = normalizeGender(gender);
+//   const cleanSpecialization = normalizeText(
+//     specialization || "Eye"
+//   );
+
+//   const cleanAge =
+//     age === undefined || age === null || String(age).trim() === ""
+//       ? NaN
+//       : Number(age);
+
+//   // Required fields validation
+//   if (
+//     !cleanName ||
+//     !cleanMobile ||
+//     !cleanGender ||
+//     !date ||
+//     !Number.isFinite(cleanAge)
+//   ) {
+//     return "Required fields missing";
+//   }
+
+//   // Indian mobile validation
+//   if (!mobileRegex.test(cleanMobile)) {
+//     return "Please enter a valid Indian mobile number";
+//   }
+
+//   // Email validation (optional)
+//   if (cleanEmail && !emailRegex.test(cleanEmail)) {
+//     return "Please enter a valid email address";
+//   }
+
+//   // Gender validation
+//   if (!["Male", "Female", "Others"].includes(cleanGender)) {
+//     return "Invalid gender";
+//   }
+
+//   // Age validation
+//   if (
+//     !Number.isInteger(cleanAge) ||
+//     cleanAge < 0 ||
+//     cleanAge > 130
+//   ) {
+//     return "Invalid age";
+//   }
+
+//   // Specialization validation
+//   if (!cleanSpecialization) {
+//     return "Specialization is required";
+//   }
+
+//   // Date validation
+//   const selectedDate = new Date(date);
+
+//   if (Number.isNaN(selectedDate.getTime())) {
+//     return "Invalid appointment date";
+//   }
+
+//   return "";
+// };
 
 const validatePatientInput = ({
   name,
@@ -37,57 +106,91 @@ const validatePatientInput = ({
   age,
   gender,
   date,
-  time,
   specialization,
 }) => {
+  // Normalize input fields
   const cleanName = normalizeText(name);
   const cleanMobile = normalizeMobile(mobile);
   const cleanEmail = normalizeEmail(email);
   const cleanGender = normalizeGender(gender);
-  const cleanTime = normalizeTime(time);
   const cleanSpecialization = normalizeText(specialization || "Eye");
-  const cleanAge = Number(age);
 
-  if (
-    !cleanName ||
-    !cleanMobile ||
-    age === "" ||
-    !cleanGender ||
-    !date ||
-    !cleanTime
-  ) {
-    return "Required fields missing";
+  // 1. Required fields validation
+  if (!cleanName) {
+    return "Patient name is required";
   }
 
+  if (!cleanMobile) {
+    return "Mobile number is required";
+  }
+
+  if (age === undefined || age === null || String(age).trim() === "") {
+    return "Age is required";
+  }
+
+  if (!cleanGender) {
+    return "Gender is required";
+  }
+
+  if (!date) {
+    return "Appointment date is required";
+  }
+
+  // 2. Name validation
+  if (cleanName.length < 2 || cleanName.length > 100) {
+    return "Name must be between 2 and 100 characters";
+  }
+
+  // 3. Indian mobile number validation
   if (!mobileRegex.test(cleanMobile)) {
-    return "Please enter a valid Indian mobile number";
+    return "Please enter a valid 10-digit Indian mobile number";
   }
 
+  // 4. Email validation (optional)
   if (cleanEmail && !emailRegex.test(cleanEmail)) {
     return "Please enter a valid email address";
   }
 
+  // 5. Age validation
+  const cleanAge = Number(age);
+
+  if (
+    !Number.isFinite(cleanAge) ||
+    !Number.isInteger(cleanAge) ||
+    cleanAge < 0 ||
+    cleanAge > 130
+  ) {
+    return "Age must be a whole number between 0 and 130";
+  }
+
+  // 6. Gender validation
   if (!["Male", "Female", "Others"].includes(cleanGender)) {
     return "Invalid gender";
   }
 
-  if (!Number.isFinite(cleanAge) || cleanAge < 0 || cleanAge > 130) {
-    return "Invalid age";
-  }
-
-  if (!timeRegex.test(cleanTime)) {
-    return "Invalid appointment time";
-  }
-
+  // 7. Specialization validation
   if (!cleanSpecialization) {
     return "Specialization is required";
   }
 
-  const selectedDate = new Date(date);
-  if (Number.isNaN(selectedDate.getTime())) {
+  // 8. Appointment date validation
+  if (typeof date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return "Appointment date must be in YYYY-MM-DD format";
+  }
+
+  const [year, month, day] = date.split("-").map(Number);
+
+  const selectedDate = new Date(Date.UTC(year, month - 1, day));
+
+  if (
+    selectedDate.getUTCFullYear() !== year ||
+    selectedDate.getUTCMonth() !== month - 1 ||
+    selectedDate.getUTCDate() !== day
+  ) {
     return "Invalid appointment date";
   }
 
+  // All validations passed
   return "";
 };
 
@@ -150,7 +253,13 @@ const getSelectedDate = (date) => {
 };
 
 const getNextToken = async (date, scope = "global") => {
-  const key = new Date(date).toISOString().split("T")[0];
+  const selectedDate = new Date(date);
+
+  if (Number.isNaN(selectedDate.getTime())) {
+    throw new Error("Invalid appointment date");
+  }
+
+  const key = selectedDate.toISOString().split("T")[0];
 
   const counter = await Counter.findOneAndUpdate(
     { date: key, scope },
@@ -194,7 +303,6 @@ const sendBookingMessages = async ({
   mobile,
   email,
   selectedDate,
-  time,
   token,
   paymentStatus,
   finalAmount,
@@ -210,13 +318,13 @@ const sendBookingMessages = async ({
 Your appointment is confirmed.
 
 Date: ${formattedDate}
-Time: ${time}
+
 Token: ${token}
 
 Payment: ${paymentStatus}
 Amount: Rs ${finalAmount}
 
-- Nayan Drishti Clinic`,
+- JAIN EYE CARE`,
     ).catch((err) => console.log("Email failed:", err.message));
   }
 
@@ -224,7 +332,6 @@ Amount: Rs ${finalAmount}
     to: mobile,
     name,
     date: formattedDate,
-    time,
     token,
   }).catch((err) => console.log("WhatsApp failed:", err.message));
 };
@@ -255,7 +362,6 @@ const createAppointment = async ({
   body,
   bookedBy,
   allowManualDiscount = false,
-  requireSlotRule,
 }) => {
   const validationError = validatePatientInput(body);
   if (validationError) {
@@ -264,7 +370,6 @@ const createAppointment = async ({
 
   const cleanMobile = normalizeMobile(body.mobile);
   const cleanEmail = normalizeEmail(body.email);
-  const cleanTime = normalizeTime(body.time);
   const cleanGender = normalizeGender(body.gender);
   const cleanSpecialization = normalizeText(body.specialization || "Eye");
   const selectedDate = getSelectedDate(body.date);
@@ -273,13 +378,6 @@ const createAppointment = async ({
     body.doctorId,
     cleanSpecialization,
   );
-
-  const minute = Number(cleanTime.split(":")[1]);
-  const slotAllowed = requireSlotRule(minute);
-
-  if (!slotAllowed.ok) {
-    return { error: slotAllowed.message, status: 400 };
-  }
 
   const patient = await upsertPatient({
     name: body.name,
@@ -291,7 +389,6 @@ const createAppointment = async ({
 
   const existing = await Appointment.findOne({
     date: selectedDate,
-    time: cleanTime,
     doctorId: resolvedDoctorId,
     status: { $ne: "Cancelled" },
   });
@@ -316,7 +413,6 @@ const createAppointment = async ({
     patientId: patient._id,
     doctorId: resolvedDoctorId,
     date: selectedDate,
-    time: cleanTime,
     specialization: cleanSpecialization,
     token,
     bookedBy,
@@ -329,7 +425,7 @@ const createAppointment = async ({
     mobile: cleanMobile,
     email: cleanEmail,
     selectedDate,
-    time: cleanTime,
+
     token,
     paymentStatus: appointment.paymentStatus,
     finalAmount: appointment.finalAmount,
@@ -367,22 +463,64 @@ export const bookAppointment = async (req, res) => {
     return res.status(500).json({ message: "Appointment booking failed" });
   }
 };
+// export const receptionBookAppointment = async (req, res) => {
+//   try {
+//     console.log("Reception request body:", req.body);
+
+//     const result = await createAppointment({
+//       body: req.body,
+//       bookedBy: "RECEPTION",
+//       allowManualDiscount: true,
+//     });
+
+//     if (result.error) {
+//       console.log("Reception validation error:", result.error);
+//       return res.status(result.status).json({
+//         message: result.error,
+//       });
+//     }
+
+//     return res.status(201).json({
+//       message: "Appointment booked successfully",
+//       appointment: result.appointment,
+//     });
+//   } catch (err) {
+//     console.error("RECEPTION BOOK ERROR:", err);
+
+//     return res.status(500).json({
+//       message: "Appointment booking failed",
+//     });
+//   }
+// };
 
 export const receptionBookAppointment = async (req, res) => {
   try {
+    console.log("RECEPTION BODY:", JSON.stringify(req.body, null, 2));
+
+    const body = req.body || {};
+
+    // Log each field received by backend
+    console.log("REQUIRED FIELD CHECK:", {
+      name: body.name,
+      mobile: body.mobile,
+      age: body.age,
+      gender: body.gender,
+      date: body.date,
+      specialization: body.specialization,
+    });
+
     const result = await createAppointment({
-      body: req.body,
+      body,
       bookedBy: "RECEPTION",
       allowManualDiscount: true,
-      requireSlotRule: (minute) => ({
-        ok: minute % 10 === 0,
-        message:
-          "Reception can only book slots ending with 00, 10, 20, 30, 40, 50",
-      }),
     });
 
     if (result.error) {
-      return res.status(result.status).json({ message: result.error });
+      console.log("VALIDATION ERROR:", result.error);
+
+      return res.status(result.status).json({
+        message: result.error,
+      });
     }
 
     return res.status(201).json({
@@ -392,11 +530,9 @@ export const receptionBookAppointment = async (req, res) => {
   } catch (err) {
     console.error("RECEPTION BOOK ERROR:", err);
 
-    if (err.code === 11000) {
-      return res.status(409).json({ message: "Slot already booked" });
-    }
-
-    return res.status(500).json({ message: "Appointment booking failed" });
+    return res.status(500).json({
+      message: err.message || "Appointment booking failed",
+    });
   }
 };
 

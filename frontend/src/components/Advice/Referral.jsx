@@ -31,14 +31,14 @@ const Referral = ({ data = {}, setData }) => {
             }
           />
 
-          <input
+          {/* <input
             type="time"
             className="border p-2"
             value={data.intra?.time || ""}
             onChange={(e) =>
               updateNested("intra", "time", e.target.value)
             }
-          />
+          /> */}
 
           <select
             className="border p-2"
@@ -199,14 +199,14 @@ const Referral = ({ data = {}, setData }) => {
             <option>Tushya Om Parkash</option>
           </select>
 
-          <input
+          {/* <input
             type="time"
             className="border p-2"
             value={data.inter?.time || ""}
             onChange={(e) =>
               updateNested("inter", "time", e.target.value)
             }
-          />
+          /> */}
         </div>
 
         <textarea

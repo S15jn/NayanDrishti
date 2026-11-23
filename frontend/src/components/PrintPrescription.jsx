@@ -300,7 +300,7 @@ const MedicineTable = ({ rows }) => {
 const PrintPrescription = ({ selected, formData, doctor }) => {
   const patient = selected?.patientId || {};
   const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const doctorName = doctor?.name || user?.name || "Doctor";
+  const doctorName =  user?.name || "Samyak Jain";
 
   const historyGroups = getHistoryLines(formData.history || {});
   const rightExam = getExamLines(formData.examination || {}, "right");
@@ -310,30 +310,28 @@ const PrintPrescription = ({ selected, formData, doctor }) => {
   return (
     <div className="print-prescription">
       <header className="opd-header">
-        <div className="brand-mark">ND</div>
+        <div className="brand-mark">
+  <img src="/logo.jpeg" alt="Jain Eye Care Logo" />
+</div>
         <div className="brand-text">
-          <h1>Nayan Drishti</h1>
-          <p>Eye Care & Opticals</p>
+          <h1>JAIN EYE CARE</h1>
+          <p>Advance Eye Care & Premium Opticals</p>
         </div>
       </header>
 
       <section className="top-info">
         <div className="info-grid">
           <div><b>Patient:</b> {patient.name || "--"}</div>
-          <div><b>Age/Sex:</b> {patient.age || "--"}</div>
+          <div><b>Age/Sex:</b> {patient.age || "--"} & {patient.sex}</div>
           <div><b>Contact:</b> {patient.mobile || "--"}</div>
           <div><b>Email:</b> {patient.email || "--"}</div>
-          <div><b>Patient ID:</b> {patient._id || formData.patientId || "--"}</div>
-          <div><b>Note Dt:</b> {today()}</div>
         </div>
 
         <div className="info-grid">
-          <div><b>Doctor:</b> {doctorName}</div>
-          <div><b>Facility:</b> Nayan Drishti Eye Care</div>
+          <div><b>Consulant:</b>Samyak Jain</div>
+          <div><b>Facility:</b> Jain Eye Care</div>
           <div><b>Appt. Dt:</b> {selected?.date ? formatDate(selected.date) : today()}</div>
-          <div><b>Address:</b> Nayan Drishti Clinic</div>
-          <div><b>Mobile:</b> {patient.mobile || "--"}</div>
-          <div><b>Token:</b> {selected?.token || "--"}</div>
+         
         </div>
       </section>
 
@@ -358,14 +356,14 @@ const PrintPrescription = ({ selected, formData, doctor }) => {
         )}
       </section>
 
-      <section className="print-section">
+      {/* <section className="print-section">
         <h2>Refraction</h2>
 
         <div className="two-col">
           <EyeRefraction title="R/OD" eye={formData.refraction?.right || {}} />
           <EyeRefraction title="L/OS" eye={formData.refraction?.left || {}} />
         </div>
-      </section>
+      </section> */}
 
       <section className="print-section">
         <h2>Examination</h2>
@@ -391,10 +389,10 @@ const PrintPrescription = ({ selected, formData, doctor }) => {
         </div>
       </section>
 
-      <section className="print-section">
+      {/* <section className="print-section">
         <h2>Diagnosis</h2>
         <div>{formData.diagnosis || "--"}</div>
-      </section>
+      </section> */}
 
       <section className="print-section">
         <h2>Advice / Prescription</h2>
@@ -413,15 +411,13 @@ const PrintPrescription = ({ selected, formData, doctor }) => {
 
       <footer className="opd-footer">
         <div>
-          <b>Address:</b> Nayan Drishti Eye Care & Opticals
+          <b>Address:</b> Jain Eye Care  Jindera Bhawan S.P Road Tundla
+         <b> Mobile no:</b> 6395826751
           <br />
           For Appointment / Optical Enquiry
         </div>
 
-        <div className="signature">
-          <div>Doctor Signature</div>
-          <b>{doctorName}</b>
-        </div>
+       
       </footer>
     </div>
   );

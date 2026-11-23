@@ -1,53 +1,155 @@
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import API from "../services/api";
 
-const useAutoSave = (data, activeTab, delay = 1500) => {
+const useAutoSave = (data, activeTab, delay = 2000) => {
   const timerRef = useRef(null);
-  const prevTabRef = useRef(activeTab);
-  const lastSavedRef = useRef("");
+  const statusTimerRef = useRef(null);
+
+  const latestDataRef = useRef(data);
+
+  const lastSavedRef = useRef({
+    appointmentId: null,
+    snapshot: "",
+  });
+
+  const inFlightRef = useRef(false);
+  const queuedRef = useRef(false);
 
   const [status, setStatus] = useState("idle");
 
-  const canSave = Boolean(data?.patientId && data?.appointmentId);
+  // Always keep latest data
+  latestDataRef.current = data;
+
+  // Convert data into a stable snapshot
+  const snapshot = JSON.stringify(data);
 
   const saveNow = useCallback(async () => {
-    if (!canSave) return;
+    const currentData = latestDataRef.current;
 
-    const snapshot = JSON.stringify(data);
-    if (snapshot === lastSavedRef.current) return;
+    if (!currentData?.patientId || !currentData?.appointmentId) {
+      return;
+    }
+
+    const appointmentId = currentData.appointmentId;
+    const currentSnapshot = JSON.stringify(currentData);
+
+    // Skip unchanged data
+    if (
+      lastSavedRef.current.appointmentId === appointmentId &&
+      lastSavedRef.current.snapshot === currentSnapshot
+    ) {
+      return;
+    }
+
+    // Only one API request at a time
+    if (inFlightRef.current) {
+      queuedRef.current = true;
+      return;
+    }
+
+    inFlightRef.current = true;
+    queuedRef.current = false;
 
     try {
       setStatus("saving");
-      await API.post("/records/save", data);
 
-      lastSavedRef.current = snapshot;
-      setStatus("saved");
+      await API.post(
+        "/records/save",
+        JSON.parse(currentSnapshot)
+      );
 
-      setTimeout(() => setStatus("idle"), 1200);
-    } catch (err) {
-      console.error("Save failed:", err);
-      setStatus("error");
+      // Update only if the same appointment is selected
+      if (
+        latestDataRef.current?.appointmentId === appointmentId
+      ) {
+        lastSavedRef.current = {
+          appointmentId,
+          snapshot: currentSnapshot,
+        };
+
+        setStatus("saved");
+
+        clearTimeout(statusTimerRef.current);
+
+        statusTimerRef.current = setTimeout(() => {
+          if (
+            latestDataRef.current?.appointmentId === appointmentId
+          ) {
+            setStatus("idle");
+          }
+        }, 1500);
+      }
+    } catch (error) {
+      console.error("Auto-save failed:", error);
+
+      if (
+        latestDataRef.current?.appointmentId === appointmentId
+      ) {
+        setStatus("error");
+      }
+    } finally {
+      inFlightRef.current = false;
+
+      // If changes happened during the request,
+      // wait again before saving the latest data.
+      if (queuedRef.current) {
+        queuedRef.current = false;
+
+        clearTimeout(timerRef.current);
+
+        timerRef.current = setTimeout(() => {
+          void saveNow();
+        }, delay);
+      }
     }
-  }, [canSave, data]);
+  }, [delay]);
 
+  // Reset when appointment changes
   useEffect(() => {
-    if (!canSave) return;
+    clearTimeout(timerRef.current);
+    clearTimeout(statusTimerRef.current);
 
-    if (prevTabRef.current !== activeTab) {
-      prevTabRef.current = activeTab;
-      saveNow();
+    queuedRef.current = false;
+
+    lastSavedRef.current = {
+      appointmentId: data?.appointmentId ?? null,
+      snapshot: "",
+    };
+
+    setStatus("idle");
+  }, [data?.appointmentId]);
+
+  // Debounce using snapshot instead of object reference
+  useEffect(() => {
+    if (!data?.patientId || !data?.appointmentId) {
       return;
     }
 
     clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(saveNow, delay);
 
-    return () => clearTimeout(timerRef.current);
-  }, [activeTab, canSave, data, delay, saveNow]);
+    timerRef.current = setTimeout(() => {
+      void saveNow();
+    }, delay);
 
+    return () => {
+      clearTimeout(timerRef.current);
+    };
+  }, [
+    snapshot,
+    data?.patientId,
+    data?.appointmentId,
+    delay,
+    saveNow,
+  ]);
+
+  // Cleanup
   useEffect(() => {
-    lastSavedRef.current = "";
-  }, [data?.appointmentId]);
+    return () => {
+      clearTimeout(timerRef.current);
+      clearTimeout(statusTimerRef.current);
+    };
+  }, []);
 
   return { status, saveNow };
 };

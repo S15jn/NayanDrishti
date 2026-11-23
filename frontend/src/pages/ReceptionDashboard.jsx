@@ -9,7 +9,7 @@ function ReceptionDashboard() {
     gender: "",
     email: "",
     date: "",
-    time: "",
+   
 
     specialization: "Eye",
 
@@ -112,67 +112,119 @@ useEffect(() => {
      BOOK APPOINTMENT
   ========================= */
 
-  const handleBook = async () => {
-    try {
-      if (
-        !form.name ||
-        !form.mobile ||
-        !form.age ||
-        !form.gender ||
-        !form.date ||
-        !form.time
-      ) {
-        return alert(
-          "Please fill required fields",
-        );
-      }
+ 
 
-      const minute = Number(form.time.split(":")[1]);
 
-      if (Number.isNaN(minute) || minute % 10 !== 0) {
-        return alert(
-          "Please select a valid reception slot ending with 00, 10, 20, 30, 40, or 50",
-        );
-      }
+const handleBook = async () => {
+  if (loading) return;
 
-      await API.post(
-        "/appointments/reception-book",
-        form,
-      );
+  console.log("Booking form data:", form);
 
-      alert(
-        "Appointment booked successfully",
-      );
-
-      setForm({
-        name: "",
-        mobile: "",
-        age: "",
-        gender: "",
-        email: "",
-        date: "",
-        time: "",
-
-        specialization: "Eye",
-
-        paymentMode: "CASH",
-
-        couponCode: "",
-
-        customDiscount: "",
-      });
-
-      loadToday();
-    } catch (err) {
-      console.log(err);
-
-      alert(
-        err.response?.data?.message ||
-          err.message ||
-          "Booking failed. Please check backend server is running.",
-      );
+  try {
+    // 1. Frontend validation
+    if (
+      !form.name?.trim() ||
+      !form.mobile?.trim() ||
+      !String(form.age ?? "").trim() ||
+      !form.gender ||
+      !form.date
+    ) {
+      alert("Please fill all required fields.");
+      return;
     }
-  };
+
+    // 2. Set loading
+    setLoading(true);
+
+    // 3. Prepare request payload
+    const payload = {
+      ...form,
+      name: form.name.trim(),
+      mobile: form.mobile.trim(),
+      age: Number(form.age),
+      email: form.email?.trim() || "",
+      specialization: form.specialization || "Eye",
+      paymentMode: form.paymentMode || "CASH",
+      couponCode: form.couponCode?.trim() || "",
+      customDiscount:
+        form.customDiscount === ""
+          ? ""
+          : Number(form.customDiscount),
+      bookedBy: "RECEPTION",
+    };
+
+    console.log(
+      "Sending appointment data:",
+      JSON.stringify(payload, null, 2)
+    );
+
+    // 4. Send request to backend
+    const response = await API.post(
+      "/appointments/reception-book",
+      payload
+    );
+
+    // 5. Success response
+    console.log("Booking response:", response.data);
+
+    alert(
+      response.data?.message ||
+      "Appointment booked successfully!"
+    );
+
+    // 6. Reset form
+    setForm({
+      name: "",
+      mobile: "",
+      age: "",
+      gender: "",
+      email: "",
+      date: "",
+      specialization: "Eye",
+      paymentMode: "CASH",
+      couponCode: "",
+      customDiscount: "",
+    });
+
+    // 7. Refresh appointments list
+    await loadToday();
+
+  } catch (err) {
+    // 8. Log actual backend error
+    console.error("BOOKING FAILED");
+    console.error("HTTP STATUS:", err.response?.status);
+
+    console.error(
+      "BACKEND ERROR DETAILS:",
+      JSON.stringify(err.response?.data, null, 2)
+    );
+
+    console.error(
+      "REQUEST PAYLOAD:",
+      err.config?.data
+    );
+
+    console.error("ERROR MESSAGE:", err.message);
+
+    // 9. Show meaningful error
+    const backendError = err.response?.data;
+
+    const errorMessage =
+      backendError?.message ||
+      backendError?.error ||
+      (typeof backendError === "string"
+        ? backendError
+        : null) ||
+      "Booking failed. Please check the browser console.";
+
+    alert(errorMessage);
+
+  } finally {
+    // 10. Always stop loading
+    setLoading(false);
+  }
+};
+
 
   /* =========================
      SEARCH
@@ -378,31 +430,9 @@ const handleSearch = useCallback(async () => {
             }
           />
 
-          {/* TIME */}
+         
 
-          <input
-            type="time"
-            className="input"
-            value={form.time}
-            min="00:00"
-            step="600"
-            onChange={(e) =>
-              setForm({
-                ...form,
-                time: e.target.value,
-              })
-            }
-          />
-
-          {/* SLOT INFO */}
-
-          <div className="text-xs text-green-700 bg-green-50 p-2 rounded">
-            Reception booking allowed
-            only on:
-            <br />
-            00, 10, 20, 30, 40, 50
-            minutes
-          </div>
+        
 
           {/* PAYMENT MODE */}
 
@@ -485,7 +515,6 @@ const handleSearch = useCallback(async () => {
           </div>
 
           {/* BUTTON */}
-
           <button
             onClick={handleBook}
             className="bg-blue-600 text-white w-full py-2 rounded"
@@ -578,17 +607,14 @@ const handleSearch = useCallback(async () => {
                         "N/A"}
                     </p>
 
-                    <p>
-                      Time:{" "}
-                      {item.time}
-                    </p>
+                   
                   </div>
 
                   <div className="text-right">
                     <p className="font-semibold text-lg">
                       ₹
                       {item.finalAmount ||
-                        500}
+                        100}
                     </p>
 
                     <p className="text-sm text-gray-500">

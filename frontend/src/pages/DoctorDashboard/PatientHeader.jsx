@@ -59,7 +59,7 @@ const PatientHeader = ({
           </button>
 
           <button
-            disabled={!isComplete}
+            //disabled={!isComplete}
             onClick={handleFinalSave}
             className={`
               px-5 py-2 rounded-xl text-white

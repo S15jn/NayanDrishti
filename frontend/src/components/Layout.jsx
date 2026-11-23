@@ -6,7 +6,7 @@ function Layout({ children }) {
 
       {/* Sidebar */}
       <div className="w-60 bg-blue-600 text-white p-5">
-        <h2 className="text-xl font-bold mb-5">Nayan Drishti</h2>
+        <h2 className="text-xl font-bold mb-5">JAIN EYE CARE</h2>
 
         <nav className="flex flex-col gap-3">
           <Link to="/admin">Admin</Link>

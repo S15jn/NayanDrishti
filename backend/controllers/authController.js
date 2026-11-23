@@ -46,7 +46,7 @@ export const login = async (req, res) => {
         $regex: `^\\s*${escapeRegex(normalizedEmail)}\\s*$`,
         $options: "i",
       },
-    }).select("+password +failedLoginAttempts +lockUntil");
+    }).select("+password +failedLoginAttempts +lockUntil"); 
 
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });

@@ -50,11 +50,6 @@ const recordSchema = new Schema(
           default: "",
           trim: true,
         },
-        time: {
-          type: String,
-          default: "",
-          trim: true,
-        },
       },
     },
 
@@ -113,9 +108,9 @@ recordSchema.pre("validate", function syncAdviceFields(next) {
     this.medical = this.advice?.medical || {};
   }
 
-  if (!this.followUpTime && followUp.time) {
-    this.followUpTime = followUp.time;
-  }
+  // if (!this.followUpTime && followUp.time) {
+  //   this.followUpTime = followUp.time;
+  // }
 
   if (!this.followUpDate && followUp.date) {
     this.followUpDate = followUp.date;

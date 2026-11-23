@@ -29,7 +29,6 @@ const buildRecordPayload = (body) => {
     diagnosis: payload.diagnosis || adviceDiagnosis.diagnosis || "",
     prescription: payload.prescription || adviceDiagnosis.prescription || "",
     followUpDate: payload.followUpDate || followUp.date || null,
-    followUpTime: payload.followUpTime || followUp.time || "",
     medical: payload.medical || advice.medical || {},
   };
 };
@@ -84,10 +83,9 @@ export const getPatientRecords = async (req, res) => {
       patientId,
       isDeleted: { $ne: true },
     })
-      .sort({ updatedAt: -1 })
+      .sort({ _id: -1 })
       .limit(50)
       .lean();
-
     return res.json(records);
   } catch (err) {
     return res.status(500).json({

@@ -5,14 +5,14 @@ const client = twilio(
   process.env.TWILIO_AUTH
 );
 
-export const sendWhatsApp = async ({ to, name, date, time, token }) => {
+export const sendWhatsApp = async ({ to, name, date, token }) => {
   try {
     const message = `Hello ${name},
 
 Your appointment is confirmed ✅
 
 📅 ${date}
-⏰ ${time}
+// ⏰ ${time}
 🎫 Token: ${token}
 
 Please arrive 10 minutes early.

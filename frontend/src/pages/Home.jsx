@@ -79,7 +79,7 @@ const Home = () => {
             </p>
 
             <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-5">
-              Nayan Drishti Opticals
+              Jain Eye care
             </h1>
 
             <p className="text-lg md:text-xl text-white/85 mb-8 max-w-xl">
@@ -223,7 +223,7 @@ const Home = () => {
       </section>
 
       <footer className="bg-slate-950 text-white p-6 text-center">
-        <p>© 2026 Nayan Drishti Opticals</p>
+        <p>© 2026 Jain Eye Care</p>
       </footer>
     </div>
   );

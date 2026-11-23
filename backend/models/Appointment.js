@@ -28,11 +28,7 @@ const appointmentSchema = new mongoose.Schema(
       index: true,
     },
 
-    time: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+   
 
     token: {
       type: Number,
@@ -94,11 +90,7 @@ const appointmentSchema = new mongoose.Schema(
       default: null,
     },
 
-    followUpTime: {
-      type: String,
-      default: "",
-      trim: true,
-    },
+    
 
     notes: {
       type: String,
@@ -125,24 +117,12 @@ const appointmentSchema = new mongoose.Schema(
       maxlength: 1000,
     },
   },
-  {
-    timestamps: true,
-  },
+  
 );
 
-appointmentSchema.index(
-  { doctorId: 1, date: 1, time: 1 },
-  {
-    unique: true,
-    partialFilterExpression: {
-      status: { $ne: "Cancelled" },
-      doctorId: { $type: "objectId" },
-    },
-  },
-);
+appointmentSchema.index({ doctorId: 1, date: 1, status: 1 });
 
 appointmentSchema.index({ patientId: 1, date: -1 });
-appointmentSchema.index({ doctorId: 1, date: 1, status: 1 });
 appointmentSchema.index({ date: 1, token: 1 });
 appointmentSchema.index({ paymentStatus: 1, paymentMode: 1 });
 

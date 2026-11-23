@@ -125,8 +125,8 @@ const calculateNear = (rx) => {
       near: {
         ...rx.near,
         sph: "",
-        cyl: rx.distant?.cyl || "",
-        axis: rx.distant?.axis || "",
+        cyl:  "",
+        axis:  "",
       },
     };
   }

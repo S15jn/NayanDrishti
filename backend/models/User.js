@@ -75,9 +75,9 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
   },
-  {
-    timestamps: true,
-  },
+  // {
+  //   timestamps: true,
+  // },
 );
 
 userSchema.index({ role: 1, isActive: 1 });
